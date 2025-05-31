@@ -23,6 +23,9 @@ Whether you're a designer, a developer, or just someone who loves playing with c
 3. Choose how many colors you'd like in your palette
 4. View the generated swatches and download the palette if you like it 💾
 
+You can even try it in Google Collab
+Link -- https://colab.research.google.com/drive/1QiUBAzTcseop3kIMVSbPIyfjQYu-Fq3i#scrollTo=0UpRcsDd3-Zq
+
 ---
 
 ## 🛠️ Built With
