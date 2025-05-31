@@ -1,4 +1,3 @@
-%%writefile app.py
 import streamlit as st
 import cv2
 import numpy as np
@@ -7,18 +6,21 @@ from PIL import Image
 import io
 import base64
 
+# Convert RGB to HEX
 def rgb_to_hex(rgb):
     return '#{:02x}{:02x}{:02x}'.format(int(rgb[0]), int(rgb[1]), int(rgb[2]))
 
+# Extract dominant colors using KMeans
 def get_colors(image, num_colors):
-    image = image.resize((200, 200))
+    image = image.resize((200, 200))  # Resize for faster processing
     img_array = np.array(image)
     img_array = img_array.reshape((-1, 3))
-    kmeans = KMeans(n_clusters=num_colors)
+    kmeans = KMeans(n_clusters=num_colors, n_init=10)
     kmeans.fit(img_array)
     colors = kmeans.cluster_centers_.astype(int)
     return [rgb_to_hex(c) for c in colors]
 
+# Create palette image from hex colors
 def create_palette_image(hex_colors):
     palette = Image.new("RGB", (60 * len(hex_colors), 60), (255, 255, 255))
     for i, hex_color in enumerate(hex_colors):
@@ -27,6 +29,7 @@ def create_palette_image(hex_colors):
         palette.paste(swatch, (i * 60, 0))
     return palette
 
+# Generate download link for the palette
 def get_download_link(img, filename="palette.png"):
     buf = io.BytesIO()
     img.save(buf, format="PNG")
@@ -34,24 +37,25 @@ def get_download_link(img, filename="palette.png"):
     href = f'<a href="data:image/png;base64,{b64}" download="{filename}">📥 Download Palette</a>'
     return href
 
+# Streamlit UI
 st.set_page_config(page_title="AI Color Palette Generator", layout="centered")
 st.title("🎨 AI Color Palette Generator")
-st.markdown("Upload an image to generate a color palette from it.")
+st.markdown("Upload an image to generate a color palette based on the entire image.")
 
-uploaded = st.file_uploader("Upload image", type=["png", "jpg", "jpeg"])
+uploaded = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
 if uploaded:
     image = Image.open(uploaded).convert("RGB")
     st.image(image, caption="Uploaded Image", use_container_width=True)
 
-    num_colors = st.slider("Number of colors", min_value=2, max_value=10, value=5)
+    num_colors = st.slider("Number of colors in the palette", min_value=2, max_value=10, value=5)
     hex_colors = get_colors(image, num_colors)
 
-    st.subheader("Extracted Colors")
+    st.subheader("🎨 Extracted Colors")
     cols = st.columns(len(hex_colors))
     for i, col in enumerate(cols):
         col.color_picker(f"Color {i+1}", hex_colors[i], label_visibility="collapsed")
 
     palette_img = create_palette_image(hex_colors)
-    st.image(palette_img, caption="Generated Palette")
+    st.image(palette_img, caption="Generated Color Palette")
 
     st.markdown(get_download_link(palette_img), unsafe_allow_html=True)
