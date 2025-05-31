@@ -1,6 +1,7 @@
 streamlit
-opencv-python
-scikit-learn
+opencv-python-headless
 numpy
-Pillow
+scikit-learn
+pillow
 webcolors
+
