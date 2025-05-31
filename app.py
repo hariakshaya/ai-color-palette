@@ -1,0 +1,57 @@
+%%writefile app.py
+import streamlit as st
+import cv2
+import numpy as np
+from sklearn.cluster import KMeans
+from PIL import Image
+import io
+import base64
+
+def rgb_to_hex(rgb):
+    return '#{:02x}{:02x}{:02x}'.format(int(rgb[0]), int(rgb[1]), int(rgb[2]))
+
+def get_colors(image, num_colors):
+    image = image.resize((200, 200))
+    img_array = np.array(image)
+    img_array = img_array.reshape((-1, 3))
+    kmeans = KMeans(n_clusters=num_colors)
+    kmeans.fit(img_array)
+    colors = kmeans.cluster_centers_.astype(int)
+    return [rgb_to_hex(c) for c in colors]
+
+def create_palette_image(hex_colors):
+    palette = Image.new("RGB", (60 * len(hex_colors), 60), (255, 255, 255))
+    for i, hex_color in enumerate(hex_colors):
+        color = tuple(int(hex_color.lstrip("#")[j:j+2], 16) for j in (0, 2, 4))
+        swatch = Image.new("RGB", (60, 60), color)
+        palette.paste(swatch, (i * 60, 0))
+    return palette
+
+def get_download_link(img, filename="palette.png"):
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    b64 = base64.b64encode(buf.getvalue()).decode()
+    href = f'<a href="data:image/png;base64,{b64}" download="{filename}">📥 Download Palette</a>'
+    return href
+
+st.set_page_config(page_title="AI Color Palette Generator", layout="centered")
+st.title("🎨 AI Color Palette Generator")
+st.markdown("Upload an image to generate a color palette from it.")
+
+uploaded = st.file_uploader("Upload image", type=["png", "jpg", "jpeg"])
+if uploaded:
+    image = Image.open(uploaded).convert("RGB")
+    st.image(image, caption="Uploaded Image", use_container_width=True)
+
+    num_colors = st.slider("Number of colors", min_value=2, max_value=10, value=5)
+    hex_colors = get_colors(image, num_colors)
+
+    st.subheader("Extracted Colors")
+    cols = st.columns(len(hex_colors))
+    for i, col in enumerate(cols):
+        col.color_picker(f"Color {i+1}", hex_colors[i], label_visibility="collapsed")
+
+    palette_img = create_palette_image(hex_colors)
+    st.image(palette_img, caption="Generated Palette")
+
+    st.markdown(get_download_link(palette_img), unsafe_allow_html=True)
