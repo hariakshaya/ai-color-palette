@@ -1,1 +1,0 @@
-# ai-color-palette
